@@ -44,7 +44,7 @@ public class Server {
 					System.out.println("Failed to accept client connection and start streams");
 					e.printStackTrace();
 				}
-				
+
 				// get message from socket
 				try {
 					Message clientMsg = (Message) objIn.readObject();
