@@ -1,2 +1,5 @@
 *.class
 metadata.txt
+*.iml
+.idea/
+out/

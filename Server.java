@@ -50,7 +50,7 @@ public class Server {
 					System.out.println("Failed to accept client connection and start streams");
 					e.printStackTrace();
 				}
-				
+
 				// get message from socket
 				// TODO - process client message
 				Message clientMsg = Util.recieveMsg(objIn);
