@@ -1,7 +1,12 @@
 import java.net.*;
 import java.io.*;
+import java.security.*;
 
 public class Client {
+	private static int clientID;
+	private static int RSAkeyLen = 1024;
+	private static PrivateKey RSAprivateKey;
+	private static PublicKey RSApublicKey;
 	private static ServerSocket clientSock;
 	private static String ip;
 	private static int port;
@@ -131,6 +136,13 @@ public class Client {
 	}
 
 	public static void main(String[] args) {
+		clientID = Integer.parseInt(args[0]);
+
+		//generate key pair and store it to file
+		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, clientID);
+		RSAprivateKey = Util.getPrivateKey(clientID);
+		RSApublicKey = Util.getPublicKey(clientID);
+
 		// make in/out streams for server
 		connectToServer();
 

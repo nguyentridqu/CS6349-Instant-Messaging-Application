@@ -2,8 +2,13 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.security.*;
 
 public class Server {
+	private static int serverID;
+	private static int RSAkeyLen = 1024;
+	private static PrivateKey RSAprivateKey;
+	private static PublicKey RSApublicKey;
 	private static int port;
 	private static String ip = null;
 	private static ServerSocket serverSock;
@@ -107,6 +112,13 @@ public class Server {
 	}
 
 	public static void main(String[] args) {
+		serverID = Integer.parseInt(args[0]);
+
+		//generate key pair and store it to file
+		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
+		RSAprivateKey = Util.getPrivateKey(serverID);
+		RSApublicKey = Util.getPublicKey(serverID);
+
 		// create server socket and set my ip and port
 		createServerSocket();
 
