@@ -66,4 +66,26 @@ public final class Util {
 			e.printStackTrace();
 		}
 	}
+
+	// write a message object to an output stream
+	public static void sendMsg(ObjectOutputStream objOut, Message msg) {
+		try {
+			objOut.writeObject(msg);
+		} catch (Exception e) {
+			System.out.println("Failed to write to output stream");
+			System.out.println(e);
+		}
+	}
+
+	// write a message object to an output stream
+	public static Message recieveMsg(ObjectInputStream objIn) {
+		try {
+			Message msg = (Message) objIn.readObject();
+			return msg;
+		} catch (Exception e) {
+			System.out.println("Failed to get object from server socket");
+			System.out.println(e);
+		}
+		return null;
+	}
 }

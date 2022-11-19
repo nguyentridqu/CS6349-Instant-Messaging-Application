@@ -7,10 +7,16 @@ public class Server {
 
 	// spawn a new thread for every new client connect so they can be handled simultaneously
 	private static class clientListener extends Thread {
+		Socket socket = null;
+
+		// initialize thread with the socket from client that the server accepted
+        public clientListener(Socket socket){
+            this.socket = socket;
+        }
+		
 		@Override
         public void run() {
 			String ip = null;
-			Socket socket = null;
 			OutputStream out = null;
 			ObjectOutputStream objOut = null;
 			InputStream in = null;
@@ -20,7 +26,7 @@ public class Server {
 			try {
 				port = serverSock.getLocalPort(); // get an open port on the system
 				InetAddress fullIP = InetAddress.getLocalHost(); // get servers ip
-				ip = fullIP.getHostAddress();
+				ip = fullIP.getHostAddress(); // get just the ip portion
 				System.out.println("Server started at " + ip + ":" + port);
 			} catch (Exception e) {
 				System.out.println("Failed to get server host and port");
@@ -30,7 +36,7 @@ public class Server {
 			// write chosen port to file so other processes can retrieve it
 			Util.writeServerMetadata(ip, port);
 
-			// repeatidly perform server duties until terminated
+			// repeatedly perform server duties until terminated
 			while (true) {
 				// accept connection from client and create streams
 				try {
@@ -46,24 +52,14 @@ public class Server {
 				}
 				
 				// get message from socket
-				try {
-					Message clientMsg = (Message) objIn.readObject();
-					System.out.println("Received message");
-					// TODO - process client message
-				} catch (Exception e) {
-					System.out.println("Failed to get object from server socket");
-					e.printStackTrace();
-				}
+				// TODO - process client message
+				Message clientMsg = Util.recieveMsg(objIn);
+				System.out.println("Received message");
 
 				// respond to client
-				try {
-					Message msg = new Message();
-					objOut.writeObject(msg);
-					System.out.println("Sent message");
-				} catch (Exception e) {
-					System.out.println("Failed to write to output stream");
-					System.out.println(e);
-				}
+				Message msg = new Message();
+				Util.sendMsg(objOut, msg);
+				System.out.println("Sent message");
 
 				// close streams and socket
 				try {
@@ -90,9 +86,18 @@ public class Server {
 			e.printStackTrace();
 		}
 
-		// client thread controls communication from the client
-		Thread client = new Thread(new clientListener(), "Thread - client");
-
-		client.start();
+		// for every new client connection create a new server thread
+        while(true) {
+            try {
+                Socket socket = serverSock.accept();
+                System.out.println("Connection to server successful");
+                clientListener serverThread = new clientListener(socket);
+                serverThread.start();
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+                System.out.println("Failed accept client connection and create server thread");
+            }
+        }
 	}
 }

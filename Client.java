@@ -37,23 +37,13 @@ public class Client {
 		}
 
 		// try to write to output
-		try {
-			Message msg = new Message();
-			objOut.writeObject(msg);
-			System.out.println("Sent message");
-		} catch (Exception e) {
-			System.out.println("Failed to write to output stream");
-			System.out.println(e);
-		}
+		Message msg = new Message();
+		Util.sendMsg(objOut, msg);
+		System.out.println("Sent message");
 
 		// read response
-		try {
-			Message msg = (Message) objIn.readObject();
-			System.out.println("Received message");
-		} catch (Exception e) {
-			System.out.println("Failed to get object from server socket");
-			e.printStackTrace();
-		}
+		Message serverMsg = Util.recieveMsg(objIn);
+		System.out.println("Received message");
 
 		// close the connection and streams
 		try
