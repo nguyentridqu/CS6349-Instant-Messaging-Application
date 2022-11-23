@@ -6,11 +6,7 @@ public class DHServer {
     KeyPair serverKeys;
     KeyAgreement serverKeyAgreement;
 
-    private DHServer() {
-
-    }
-
-    public void generateServerKeys() throws Exception{
+    private DHServer() throws Exception{
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
         keyGen.initialize(4096);
         serverKeys = keyGen.generateKeyPair();
