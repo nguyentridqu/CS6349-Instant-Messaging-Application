@@ -37,7 +37,6 @@ public class KeyedHash {
                 b_i = digest.digest(outputStream.toByteArray());
 
                 for(int j = 0; j < block_size; j++){
-                    System.out.println(i*block_size+j + " " + j);
                     encrypt_msg[i*block_size+j] = c_i[j];
                 }
 
