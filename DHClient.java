@@ -8,7 +8,7 @@ public class DHClient {
     KeyPair clientKeys;
     KeyAgreement clientKeyAgreement;
 
-    private DHClient(byte[] serverPublicKey) throws Exception{
+    public DHClient(byte[] serverPublicKey) throws Exception{
         KeyFactory keyFactory = KeyFactory.getInstance("DiffieHellman");
         KeyAgreement clientKeyAgreement = KeyAgreement.getInstance("DiffieHellman");
         X509EncodedKeySpec serverKeyEncoded = new X509EncodedKeySpec(serverPublicKey);

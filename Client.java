@@ -5,6 +5,7 @@ import java.security.*;
 public class Client {
 	private static int clientID;
 	private static int RSAkeyLen = 1024;
+	private static int DHkeyLen = 4096;
 	private static PrivateKey RSAprivateKey;
 	private static PublicKey RSApublicKey;
 	private static ServerSocket clientSock;
@@ -51,10 +52,23 @@ public class Client {
 			Message clientMsg = Util.recieveMsg(clientObjIn);
 			System.out.println("Received message");
 
-			// respond to client
-			Message msg = new Message("");
+			// respond to server
+			Message msg = new Message("Hello");
 			Util.sendMsg(clientObjOut, msg);
 			System.out.println("Sent message");
+
+			try {
+				byte[] serverPubKey = new byte[DHkeyLen];
+//				clientObjIn.readFully(serverPubKey);
+//				System.out.println("Received server DH public key");
+//				System.out.println(new String(serverPubKey));
+				clientMsg = Util.recieveMsg(clientObjIn);
+				System.out.println(clientMsg);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 
 		} // end run
 	} // end clientListener
