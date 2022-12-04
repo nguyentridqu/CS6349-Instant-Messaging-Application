@@ -8,6 +8,7 @@ import java.security.*;
 
 public final class Util {
     private static String metaFile = "metadata.txt";
+	private static String hashInKeyedHash = "SHA-256";
 
 	// writes byte array to given filename
 	public static void writeBytesToFile(String filename, byte[] data){
@@ -109,6 +110,39 @@ public final class Util {
 		} catch (IOException e) {
 			System.out.println("Failed to write port to " + metaFile);
 			e.printStackTrace();
+		}
+	}
+
+	public static byte[] computeSHA(byte[] inp){
+		byte[] res = null;
+		try{
+			MessageDigest digest = MessageDigest.getInstance(hashInKeyedHash);
+			res = digest.digest(inp);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		return res;
+	}
+
+	public static byte[] appendByte(byte[] b1, byte[] b2){
+		byte[] b3 = null;
+		try {
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			outputStream.write(b1);
+			outputStream.write(b2);
+			b3 = outputStream.toByteArray();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return b3;
+	}
+
+	public static boolean checkIntegrity(byte[] str, byte[] hash, byte[] key){
+		if(Arrays.equals(hash, Util.computeSHA(Util.appendByte(str, key)))){
+			return true;
+		}
+		else{
+			throw new RuntimeException("Message Integrity is violated.");
 		}
 	}
 

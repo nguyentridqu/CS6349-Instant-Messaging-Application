@@ -30,6 +30,10 @@ public class Message implements Serializable {
 		return msg;
 	}
 
+	public void appendMsg(String m) {
+		msg += m;
+	}
+
 	public static void main(String[] args) {
 
 	}

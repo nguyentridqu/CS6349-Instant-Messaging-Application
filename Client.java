@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Scanner;
 
@@ -18,6 +19,7 @@ public class Client {
 	private static ObjectOutputStream objOut = null;
 	private static InputStream in = null;
 	private static ObjectInputStream objIn = null;
+	private static String delimiter = "|";
 
 	// listens for incoming messages from other clients
 	private static class ClientListener extends Thread {
@@ -49,14 +51,13 @@ public class Client {
 			createClientSocket();
 
 			// get message from socket
-			// TODO - process client message
+			// TODO Handle messages sent
 			Message clientMsg = Util.recieveMsg(clientObjIn);
 			System.out.println("Received message inside run");
 
 			// respond to server
 			Message msg = new Message("");
 			Util.sendMsg(clientObjOut, msg);
-
 			System.out.println("Sent message");
 
 
@@ -188,11 +189,74 @@ public class Client {
 					// generate session key for client-server
 					byte[] sessionKey = dh.computeSharedSecret();
 
+					KeyedHash khObj = new KeyedHash();
 					// TODO: List all clients with their IP and client ID
 					System.out.print("Enter the client ID you want to connect to: ");
 					int other_client_id = cin.nextInt();
 
 					// TODO: get session key, ticket and ip of other client from server
+					Message Ticket = new Message("");
+					byte[] CC_sessionKey = new byte[128];
+
+					// TODO: establish socket connection with other client
+
+					int seq_no = 0;
+					// sending ticket to other client
+					seq_no++;
+					byte[] nonce = new byte[8];
+					new SecureRandom().nextBytes(nonce);
+					String handshake_str = Ticket.getMsg() + delimiter;
+					byte[] handshake_byte = Util.appendByte(handshake_str.getBytes(), khObj.encrypt(nonce, CC_sessionKey));
+					handshake_str = delimiter + seq_no + delimiter;
+					handshake_byte = Util.appendByte(handshake_byte, handshake_str.getBytes());
+					byte[] enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
+					// TODO use objOut of the other client
+					// objOut.writeObject(enc_msg);
+					// objOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+					// objOut.flush();
+
+					// receiving challenge from other client
+					seq_no++;
+					Message handshake_msg = Util.recieveMsg(objIn);
+					handshake_byte = khObj.decrypt(handshake_msg.getMsg().getBytes(), CC_sessionKey);
+					handshake_msg = Util.recieveMsg(objIn);
+					if(Util.checkIntegrity(handshake_byte, handshake_msg.getMsg().getBytes(), CC_sessionKey)){
+						// TODO validate for seq_no in handshake_byte
+					}
+
+					// sending response to the challenge
+					seq_no++;
+					new SecureRandom().nextBytes(nonce);
+					handshake_str = delimiter + seq_no + delimiter;
+					handshake_byte = Util.appendByte(khObj.encrypt(nonce, CC_sessionKey), handshake_str.getBytes());
+					enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
+					// TODO use objOut of the other client
+					// objOut.writeObject(enc_msg);
+					// objOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+					// objOut.flush();
+
+					// sending messages
+					while(true){
+						// TODO add seq_no to messages
+						// TODO use objOut of the other client
+						String str = cin.nextLine();
+						if(str.equals("!quit")){
+							break;
+						}
+						seq_no++;
+						enc_msg = khObj.encrypt(str.getBytes(), CC_sessionKey);
+						// TODO use objOut of the other client
+						// objOut.writeObject(enc_msg);
+						// objOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+						// objOut.flush();
+
+						Message client_msgs = Util.recieveMsg(objIn);
+						byte[] decrypt_msg = khObj.decrypt(client_msgs.getMsg().getBytes(), CC_sessionKey);
+						client_msgs = Util.recieveMsg(objIn);
+						if(Util.checkIntegrity(decrypt_msg, client_msgs.getMsg().getBytes(), CC_sessionKey)){
+							System.out.println("Other Client:" + decrypt_msg);
+						}
+					}
 
 				} catch (Exception e) {
 					e.printStackTrace();
