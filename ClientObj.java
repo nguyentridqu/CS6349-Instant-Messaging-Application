@@ -1,4 +1,3 @@
-
 // client objects used to keep track of clients within the server
 public class ClientObj {
     private int id;                 // client id
@@ -13,11 +12,11 @@ public class ClientObj {
     }
 
     // getter and setter functions
-    public void setStatus (boolean busy) {
+    public void setIsBusy (boolean busy) {
         this.busy = busy;
     }
 
-    public boolean getStatus () {
+    public boolean isBusy () {
         return busy;
     }
 
