@@ -184,7 +184,7 @@ public class Client {
 					byte[] myPubKey = dh.getKeyToSend();
 					objOut.writeObject(myPubKey);
 					objOut.flush();
-					System.out.println("Sent server DH public key");
+					System.out.println("Sent client DH public key");
 
 					// generate session key for client-server
 					byte[] sessionKey = dh.computeSharedSecret();

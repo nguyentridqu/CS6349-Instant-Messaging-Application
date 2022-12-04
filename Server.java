@@ -89,8 +89,24 @@ public class Server {
 			// display clients the servers tracked
 			printClients();
 
-			DHServer dh;
+			// establish session key with client
+			byte[] sessionKey = doDHKeyExchange();
+			if (sessionKey == null) {
+				System.out.println("Error establishing D-H key exchange");
+				closeOutputStreams();
+			}
+
+
+
+
+
+			closeOutputStreams();
+		} // end run
+
+		public byte[] doDHKeyExchange() {
+			byte [] sessionKey = null;
 			try {
+				DHServer dh;
 				// create DH keys and send public key to client
 				dh = new DHServer(DHkeyLen);
 				byte[] pubKey = dh.getKeyToSend();
@@ -103,16 +119,15 @@ public class Server {
 				System.out.println("Received client DH public key");
 
 				// generate session key
-				byte [] sessionKey = dh.computeSharedSecret(clientPubKey);
+				sessionKey = dh.computeSharedSecret(clientPubKey);
+
 
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("Error establishing D-H key exchange");
-				closeOutputStreams();
 			}
+			return sessionKey;
+		}
 
-			closeOutputStreams();
-		} // end run
 	} // end clientListener
 
 	// create server socket and set my ip and port
