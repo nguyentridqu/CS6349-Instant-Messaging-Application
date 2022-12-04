@@ -5,7 +5,7 @@ import java.security.*;
 public class Client {
 	private static int clientID;
 	private static int RSAkeyLen = 1024;
-	private static int DHkeyLen = 4096;
+	private static int DHkeyLen = 512;
 	private static PrivateKey RSAprivateKey;
 	private static PublicKey RSApublicKey;
 	private static ServerSocket clientSock;

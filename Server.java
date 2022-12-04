@@ -7,7 +7,7 @@ import java.security.*;
 public class Server {
 	private static int serverID;
 	private static int RSAkeyLen = 1024;
-	private static int DHkeyLen = 4096;
+	private static int DHkeyLen = 512;
 	private static PrivateKey RSAprivateKey;
 	private static PublicKey RSApublicKey;
 	private static int port;
