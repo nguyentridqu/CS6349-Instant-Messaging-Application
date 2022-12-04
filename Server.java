@@ -7,6 +7,7 @@ import java.security.*;
 public class Server {
 	private static int serverID;
 	private static int RSAkeyLen = 1024;
+	private static int DHkeyLen = 4096;
 	private static PrivateKey RSAprivateKey;
 	private static PublicKey RSApublicKey;
 	private static int port;
@@ -72,18 +73,39 @@ public class Server {
 			// get message from socket
 			// TODO - process client message
 			Message clientMsg = Util.recieveMsg(objIn);
+			System.out.println(clientMsg);
 			System.out.println("Received message");
 
 			// add client to list of clients
 			clientObjs.add(new ClientObj(nextId.getAndIncrement(), clientMsg.getIp(), clientMsg.getPort()));
 
 			// respond to client
-			Message msg = new Message("");
+			Message msg = new Message("Hello");
 			Util.sendMsg(objOut, msg);
 			System.out.println("Sent message");
 
 			// display clients the servers tracked
 			printClients();
+
+			DHServer dh;
+			try {
+				dh = new DHServer(DHkeyLen);
+				byte[] pubKey = dh.getKeyToSend();
+
+//				objOut.write(pubKey);
+//				objOut.flush();
+//				System.out.println("Sent client DH public key");
+
+				Message key = new Message(new String(pubKey));
+				Util.sendMsg(objOut, key);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Error establishing D-H key exchange");
+				closeOutputStreams();
+			}
+
+
 
 			closeOutputStreams();
 		} // end run
@@ -114,10 +136,11 @@ public class Server {
 	public static void main(String[] args) {
 		serverID = Integer.parseInt(args[0]);
 
+
 		//generate key pair and store it to file
-		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
-		RSAprivateKey = Util.getPrivateKey(serverID);
-		RSApublicKey = Util.getPublicKey(serverID);
+//		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
+//		RSAprivateKey = Util.getPrivateKey(serverID);
+//		RSApublicKey = Util.getPublicKey(serverID);
 
 		// create server socket and set my ip and port
 		createServerSocket();
