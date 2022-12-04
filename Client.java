@@ -139,9 +139,10 @@ public class Client {
 		clientID = Integer.parseInt(args[0]);
 
 		//generate key pair and store it to file
-		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, clientID);
-		RSAprivateKey = Util.getPrivateKey(clientID);
-		RSApublicKey = Util.getPublicKey(clientID);
+		KeyPair pair = Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, clientID);
+		RSAprivateKey = pair.getPrivate();
+		RSApublicKey = pair.getPublic();
+		Util.writeBytesToFile("public_key_" + clientID, RSApublicKey.getEncoded());
 
 		// make in/out streams for server
 		connectToServer();

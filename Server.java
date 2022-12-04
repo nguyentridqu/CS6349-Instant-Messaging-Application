@@ -115,9 +115,10 @@ public class Server {
 		serverID = Integer.parseInt(args[0]);
 
 		//generate key pair and store it to file
-		Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
-		RSAprivateKey = Util.getPrivateKey(serverID);
-		RSApublicKey = Util.getPublicKey(serverID);
+		KeyPair pair = Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
+		RSAprivateKey = pair.getPrivate();
+		RSApublicKey = pair.getPublic();
+		Util.writeBytesToFile("public_key_" + serverID, RSApublicKey.getEncoded());
 
 		// create server socket and set my ip and port
 		createServerSocket();

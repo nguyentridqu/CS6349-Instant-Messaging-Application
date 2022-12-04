@@ -8,8 +8,6 @@ import java.security.*;
 
 public final class Util {
     private static String metaFile = "metadata.txt";
-	private static String public_key_filename_base = "public_key_";
-	private static String private_key_filename_base = "private_key_";
 
 	// writes byte array to given filename
 	public static void writeBytesToFile(String filename, byte[] data){
@@ -38,54 +36,18 @@ public final class Util {
 		return data;
 	}
 
-	// read public key from file given server/client ID
-	public static PublicKey getPublicKey(int ID){
-		byte[] key_bytes = readBytesFromFile(public_key_filename_base + ID);
-		X509EncodedKeySpec ks = new X509EncodedKeySpec(key_bytes);
-		PublicKey key;
-		try {
-			KeyFactory kf = KeyFactory.getInstance("RSA");
-			key = kf.generatePublic(ks);
-		} catch (InvalidKeySpecException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-		return key;
-	}
-
-	// read private key from file given server/client ID
-	public static PrivateKey getPrivateKey(int ID){
-		byte[] key_bytes = readBytesFromFile(private_key_filename_base + ID);
-		X509EncodedKeySpec ks = new X509EncodedKeySpec(key_bytes);
-		PrivateKey key;
-		try {
-			KeyFactory kf = KeyFactory.getInstance("RSA");
-			key = kf.generatePrivate(ks);
-		} catch (InvalidKeySpecException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-		return key;
-	}
-
 	// generate RSA public and private key and write it to file
-	public static void generateRSAKeyPairAndSaveToFile(int keyLen, int ID){
+	public static KeyPair generateRSAKeyPairAndSaveToFile(int keyLen, int ID){
+		KeyPair pair = null;
 		try {
 			KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 			kpg.initialize(keyLen);
-			KeyPair pair = kpg.generateKeyPair();
-			PublicKey publicKey = pair.getPublic();
-			PrivateKey privateKey = pair.getPrivate();
-
-			writeBytesToFile(public_key_filename_base + ID, publicKey.getEncoded());
-			writeBytesToFile(private_key_filename_base + ID, privateKey.getEncoded());
-
+			pair = kpg.generateKeyPair();
 		} catch (NoSuchAlgorithmException e) {
 			System.out.println("RSA key pair generation failed ");
 			e.printStackTrace();
 		}
+		return pair;
 	}
 
 	// gets all the hosts of the current servers from metaFile
