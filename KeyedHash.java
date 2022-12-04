@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class KeyedHash {
     private static int block_size = 32; // 32 bytes = 256 bits
-    private static String hashInKeyedHash = "SHA-256";
+    private static String hashInKeyedHash = "SHA-512";
 
     public static byte[] encrypt(byte[] msg, byte[] key){
         int padding_size = block_size - msg.length%block_size;

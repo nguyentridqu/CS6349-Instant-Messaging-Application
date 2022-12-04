@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.security.*;
+import java.util.Scanner;
 
 public class Client {
 	private static int clientID;
@@ -164,26 +165,45 @@ public class Client {
 		Message serverMsg = Util.recieveMsg(objIn);
 		System.out.println("Received message");
 
+		while(true) {
+			System.out.println("Choose the option:\n1 - Get session key from the server\n2 - Disconnect");
+			Scanner cin = new Scanner(System.in);
+			int option = cin.nextInt();
 
-		try {
-			// get server DH public key
-			byte[] serverPubKey = (byte[]) objIn.readObject();
-			System.out.println("Received server DH public key");
+			if(option == 1){
+				try {
+					// get server DH public key
+					byte[] serverPubKey = (byte[]) objIn.readObject();
+					System.out.println("Received server DH public key");
 
-			// create own DH keys
-			DHClient dh = new DHClient(serverPubKey);
+					// create own DH keys
+					DHClient dh = new DHClient(serverPubKey);
 
-			// send own DH public key to server
-			byte[] myPubKey = dh.getKeyToSend();
-			objOut.writeObject(myPubKey);
-			objOut.flush();
-			System.out.println("Sent server DH public key");
+					// send own DH public key to server
+					byte[] myPubKey = dh.getKeyToSend();
+					objOut.writeObject(myPubKey);
+					objOut.flush();
+					System.out.println("Sent server DH public key");
 
-			// generate session key
-			byte [] sessionKey = dh.computeSharedSecret();
+					// generate session key for client-server
+					byte[] sessionKey = dh.computeSharedSecret();
 
-		} catch (Exception e) {
-			e.printStackTrace();
+					// TODO: List all clients with their IP and client ID
+					System.out.print("Enter the client ID you want to connect to: ");
+					int other_client_id = cin.nextInt();
+
+					// TODO: get session key, ticket and ip of other client from server
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			else if(option == 2){
+				break;
+			}
+			else{
+				System.out.println("Wrong option value");
+			}
 		}
 
 		// close the connection and streams
