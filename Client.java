@@ -50,24 +50,14 @@ public class Client {
 			// get message from socket
 			// TODO - process client message
 			Message clientMsg = Util.recieveMsg(clientObjIn);
-			System.out.println("Received message");
+			System.out.println("Received message inside run");
 
 			// respond to server
-			Message msg = new Message("Hello");
+			Message msg = new Message("");
 			Util.sendMsg(clientObjOut, msg);
+
 			System.out.println("Sent message");
 
-			try {
-				byte[] serverPubKey = new byte[DHkeyLen];
-//				clientObjIn.readFully(serverPubKey);
-//				System.out.println("Received server DH public key");
-//				System.out.println(new String(serverPubKey));
-				clientMsg = Util.recieveMsg(clientObjIn);
-				System.out.println(clientMsg);
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 
 
 		} // end run
@@ -174,6 +164,28 @@ public class Client {
 		Message serverMsg = Util.recieveMsg(objIn);
 		System.out.println("Received message");
 
+
+		try {
+			// get server DH public key
+			byte[] serverPubKey = (byte[]) objIn.readObject();
+			System.out.println("Received server DH public key");
+
+			// create own DH keys
+			DHClient dh = new DHClient(serverPubKey);
+
+			// send own DH public key to server
+			byte[] myPubKey = dh.getKeyToSend();
+			objOut.writeObject(myPubKey);
+			objOut.flush();
+			System.out.println("Sent server DH public key");
+
+			// generate session key
+			byte [] sessionKey = dh.computeSharedSecret();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		// close the connection and streams
 		closeOutputStreams();
 
@@ -187,4 +199,5 @@ public class Client {
 		}
 		
 	}
+
 }

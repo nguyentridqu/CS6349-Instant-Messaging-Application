@@ -80,32 +80,36 @@ public class Server {
 			clientObjs.add(new ClientObj(nextId.getAndIncrement(), clientMsg.getIp(), clientMsg.getPort()));
 
 			// respond to client
-			Message msg = new Message("Hello");
+			Message msg = new Message("");
 			Util.sendMsg(objOut, msg);
+
 			System.out.println("Sent message");
+
 
 			// display clients the servers tracked
 			printClients();
 
 			DHServer dh;
 			try {
+				// create DH keys and send public key to client
 				dh = new DHServer(DHkeyLen);
 				byte[] pubKey = dh.getKeyToSend();
+				objOut.writeObject(pubKey);
+				objOut.flush();
+				System.out.println("Sent client DH public key");
 
-//				objOut.write(pubKey);
-//				objOut.flush();
-//				System.out.println("Sent client DH public key");
+				// receive client DH public key
+				byte[] clientPubKey = (byte[])objIn.readObject();
+				System.out.println("Received client DH public key");
 
-				Message key = new Message(new String(pubKey));
-				Util.sendMsg(objOut, key);
+				// generate session key
+				byte [] sessionKey = dh.computeSharedSecret(clientPubKey);
 
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("Error establishing D-H key exchange");
 				closeOutputStreams();
 			}
-
-
 
 			closeOutputStreams();
 		} // end run

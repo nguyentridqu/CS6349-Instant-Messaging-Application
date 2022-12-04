@@ -3,8 +3,8 @@ import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 
 public class DHServer {
-    KeyPair serverKeys;
-    KeyAgreement serverKeyAgreement;
+    private KeyPair serverKeys;
+    private KeyAgreement serverKeyAgreement;
 
     public DHServer(int keyLen) throws Exception{
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
@@ -12,6 +12,7 @@ public class DHServer {
         serverKeys = keyGen.generateKeyPair();
         serverKeyAgreement = KeyAgreement.getInstance("DiffieHellman");
         serverKeyAgreement.init(serverKeys.getPrivate());
+
     }
 
     public byte[] getKeyToSend(){
