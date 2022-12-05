@@ -9,6 +9,7 @@ public class Server {
     private static int serverID;
     private static int RSAkeyLen = 1024;
     private static int DHkeyLen = 512;
+    private static int TTL = 2000;
     private static PrivateKey RSAprivateKey;
     private static PublicKey RSApublicKey;
     private static int port;
@@ -178,9 +179,25 @@ public class Server {
                             if (validClient(otherClientID)) {
                                 Helper.sendEncrypt(objOut, "success", sessionKey);
                                 System.out.println("success");
-                                //TODO: generate ticket containing client-client session key
 
-                                //TODO: send ticket to client who requested
+                                // generate client-client session key
+                                SecureRandom random = new SecureRandom();
+                                byte[] CCkey = new byte[128];
+                                random.nextBytes(CCkey);
+
+                                // ticket for second client (encrypted session key with second's public key)
+                                RSAPublicKey otherRSAPubKey = Util.getPublicKey(otherClientID);
+                                byte[] ticket = Util.encrypt(CCkey, clientRSAPubKey);
+
+                                // timestamp for freshness
+                                long timestamp = System.currentTimeMillis();
+                                byte[] ts = Helper.longToBytes(timestamp);
+
+                                // send key, ticket, and timestamp
+                                Helper.sendEncrypt(objOut, CCkey, sessionKey);
+                                Helper.sendEncrypt(objOut, ticket, sessionKey);
+                                Helper.sendEncrypt(objOut, ts, sessionKey);
+
                             } else {
                                 Helper.sendEncrypt(objOut, "failure", sessionKey);
                                 System.out.println("failure");
