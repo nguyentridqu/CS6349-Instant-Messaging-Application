@@ -72,6 +72,7 @@ public class Client {
 					if(sq_no_came != seq_no){
 						throw new Exception("Sequence number mismatch");
 
+
                     }
                     challenge_recv = Long.parseLong(chunks[0]) - 1;
                 }
@@ -297,30 +298,29 @@ public class Client {
                         break;
                     }
 
-
                 } else if (option == 2) {
 
                     // TODO: List all clients with their IP and client ID
                     System.out.print("Enter the client ID you want to connect to: ");
                     int other_client_id = cin.nextInt();
 
-					// TODO: get session key, ticket and ip of other client from server
-					byte[] ticket_byte = new byte[128];
-					byte[] CC_sessionKey = new byte[128];
+                    // TODO: get session key, ticket and ip of other client from server
+                    byte[] ticket_byte = new byte[128];
+                    byte[] CC_sessionKey = new byte[128];
 
                     // TODO: establish socket connection with other client
 
-					int seq_no = 0;
-					// sending ticket to other client
-					seq_no++;
-					long nonce = new Random().nextLong();
-					String handshake_str = nonce + delimiter + seq_no + delimiter;
-					byte[] handshake_byte = handshake_str.getBytes();
-					byte[] enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
-					clientThread.clientObjOut.writeObject(ticket_byte);
-					clientThread.clientObjOut.writeObject(enc_msg);
-					clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
-					clientThread.clientObjOut.flush();
+                    int seq_no = 0;
+                    // sending ticket to other client
+                    seq_no++;
+                    long nonce = new Random().nextLong();
+                    String handshake_str = nonce + delimiter + seq_no + delimiter;
+                    byte[] handshake_byte = handshake_str.getBytes();
+                    byte[] enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
+                    clientThread.clientObjOut.writeObject(ticket_byte);
+                    clientThread.clientObjOut.writeObject(enc_msg);
+                    clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+                    clientThread.clientObjOut.flush();
 
 					// receiving challenge from other client
 					seq_no++;
@@ -336,6 +336,7 @@ public class Client {
                         if(sq_no_came != seq_no){
                             throw new Exception("Sequence number mismatch");
                         }
+
                         long nonce_recv = Long.parseLong(chunks[0]);
                         if (nonce_recv != nonce - 1) {
                             throw new Exception("Nonce mismatch");
