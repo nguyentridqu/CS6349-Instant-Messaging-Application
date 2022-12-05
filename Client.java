@@ -1,3 +1,4 @@
+import javax.crypto.Cipher;
 import java.net.*;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -59,8 +60,9 @@ public class Client {
                 int seq_no = 1;
                 // receive ticket from other client
                 byte[] ticket = (byte[]) clientObjIn.readObject();
-                // TODO extract key from ticket
-                byte[] CC_sessionKey = new byte[128];
+                Cipher cipher = Cipher.getInstance("RSA");
+                cipher.init(Cipher.DECRYPT_MODE, RSAprivateKey);
+                byte[] CC_sessionKey = cipher.doFinal(ticket);
 
                 byte[] handshake_byte = (byte[]) clientObjIn.readObject();
                 byte[] sha_msg = (byte[]) clientObjIn.readObject();
