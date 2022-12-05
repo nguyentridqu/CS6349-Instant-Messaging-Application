@@ -1,7 +1,5 @@
 import java.net.*;
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.*;
@@ -32,18 +30,29 @@ public class Server {
         ObjectOutputStream objOut = null;
         InputStream in = null;
         ObjectInputStream objIn = null;
-        int clientId;
+        int thisClientId;
 
         // initialize thread with the socket from client that the server accepted
         public clientListener(Socket socket) {
             this.socket = socket;
         }
 
+        public boolean validClient(int otherClientId) {
+            boolean valid = false;
+            for (ClientObj client : clientObjs) {
+                if (client.getId() == otherClientId) {
+                    valid = true;
+                    break;
+                }
+            }
+            return valid && (otherClientId != thisClientId);
+        }
+
         public String getClientList() {
             String clientList = "";
             for (ClientObj client : clientObjs) {
                 clientList += client.toString();
-                if (client.getId() == clientId) {
+                if (client.getId() == thisClientId) {
                     clientList += " (self)";
                 }
                 clientList += "\n";
@@ -119,6 +128,7 @@ public class Server {
 
             // add client to list of clients
             clientObjs.add(new ClientObj(clientMsg.getId(), clientMsg.getIp(), clientMsg.getPort()));
+            thisClientId = clientMsg.getId();
 
             // get public key of client
             RSAPublicKey clientRSAPubKey = Util.getPublicKey(clientMsg.getId());
@@ -160,11 +170,22 @@ public class Server {
                     switch (clientChoice) {
                         case "getClientList":
                             Helper.sendEncrypt(objOut, getClientList(), sessionKey);
-                            System.out.println("Sent client list to client " + clientId);
+                            System.out.println("Sent client list to client " + thisClientId);
                             break;
-                        case "2":
-                            break;
-                        case "":
+                        case "talkToAnother":
+                            String otherClient = Helper.recvDecrypt(objIn, sessionKey);
+                            int otherClientID = Integer.parseInt(otherClient);
+                            if (validClient(otherClientID)) {
+                                Helper.sendEncrypt(objOut, "success", sessionKey);
+                                System.out.println("success");
+                                //TODO: generate ticket containing client-client session key
+
+                                //TODO: send ticket to client who requested
+                            } else {
+                                Helper.sendEncrypt(objOut, "failure", sessionKey);
+                                System.out.println("failure");
+                            }
+
                             break;
                         default:
                             break;

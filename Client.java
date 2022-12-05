@@ -53,24 +53,24 @@ public class Client {
             // accept client connection and create in/out streams
             createClientSocket();
 
-			KeyedHash khObj = new KeyedHash();
-			try {
-				int seq_no = 1;
-				// receive ticket from other client
-				byte[] ticket = (byte[]) clientObjIn.readObject();
-				// TODO extract key from ticket
-				byte[] CC_sessionKey = new byte[128];
+            KeyedHash khObj = new KeyedHash();
+            try {
+                int seq_no = 1;
+                // receive ticket from other client
+                byte[] ticket = (byte[]) clientObjIn.readObject();
+                // TODO extract key from ticket
+                byte[] CC_sessionKey = new byte[128];
 
-				byte[] handshake_byte = (byte[]) clientObjIn.readObject();
+                byte[] handshake_byte = (byte[]) clientObjIn.readObject();
                 byte[] sha_msg = (byte[]) clientObjIn.readObject();
                 long challenge_recv = 0;
-                if(Util.checkIntegrity(handshake_byte, sha_msg, CC_sessionKey)){
+                if (Util.checkIntegrity(handshake_byte, sha_msg, CC_sessionKey)) {
                     handshake_byte = khObj.decrypt(handshake_byte, CC_sessionKey);
                     String handshake_str = new String(handshake_byte);
-					String[] chunks = handshake_str.split("[" + delimiter + "]");
-					int sq_no_came = Integer.parseInt(chunks[1]);
-					if(sq_no_came != seq_no){
-						throw new Exception("Sequence number mismatch");
+                    String[] chunks = handshake_str.split("[" + delimiter + "]");
+                    int sq_no_came = Integer.parseInt(chunks[1]);
+                    if (sq_no_came != seq_no) {
+                        throw new Exception("Sequence number mismatch");
 
 
                     }
@@ -87,40 +87,40 @@ public class Client {
                 clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
                 clientObjOut.flush();
 
-				// receiving response of challenge
-				seq_no++;
-				handshake_byte = (byte[]) clientObjIn.readObject();
-				sha_msg = (byte[]) clientObjIn.readObject();
-                if(Util.checkIntegrity(handshake_byte, sha_msg, CC_sessionKey)){
+                // receiving response of challenge
+                seq_no++;
+                handshake_byte = (byte[]) clientObjIn.readObject();
+                sha_msg = (byte[]) clientObjIn.readObject();
+                if (Util.checkIntegrity(handshake_byte, sha_msg, CC_sessionKey)) {
                     // validate for seq_no and nonce in handshake_byte
                     byte[] decrypt_msg = khObj.decrypt(handshake_byte, CC_sessionKey);
                     handshake_str = new String(decrypt_msg);
-					String[] chunks = handshake_str.split("[" + delimiter + "]");
-					int sq_no_came = Integer.parseInt(chunks[1]);
-					if(sq_no_came != seq_no){
-						throw new Exception("Sequence number mismatch");
-					}
-					long nonce_recv = Long.parseLong(chunks[0]);
-					if(nonce_recv != nonce - 1){
-						throw new Exception("Nonce mismatch");
-					}
-				}
+                    String[] chunks = handshake_str.split("[" + delimiter + "]");
+                    int sq_no_came = Integer.parseInt(chunks[1]);
+                    if (sq_no_came != seq_no) {
+                        throw new Exception("Sequence number mismatch");
+                    }
+                    long nonce_recv = Long.parseLong(chunks[0]);
+                    if (nonce_recv != nonce - 1) {
+                        throw new Exception("Nonce mismatch");
+                    }
+                }
 
-				// exchange messages
-				Scanner cin = new Scanner(System.in);
-				while(true) {
+                // exchange messages
+                Scanner cin = new Scanner(System.in);
+                while (true) {
                     System.out.println("Connection established with other client, waiting for other client to start chatting...");
-					seq_no++;
-					byte[] client_msgs = (byte[]) clientObjIn.readObject();
+                    seq_no++;
+                    byte[] client_msgs = (byte[]) clientObjIn.readObject();
                     byte[] sha = (byte[]) clientObjIn.readObject();
-					if (Util.checkIntegrity(client_msgs, sha, CC_sessionKey)) {
+                    if (Util.checkIntegrity(client_msgs, sha, CC_sessionKey)) {
                         byte[] decrypt_msg = khObj.decrypt(client_msgs, CC_sessionKey);
                         String str = new String(decrypt_msg);
-						String[] chunks = str.split("[" + delimiter + "]");
-						int sq_no_came = Integer.parseInt(chunks[1]);
-						if (sq_no_came != seq_no) {
-							throw new Exception("Sequence number mismatch");
-						}
+                        String[] chunks = str.split("[" + delimiter + "]");
+                        int sq_no_came = Integer.parseInt(chunks[1]);
+                        if (sq_no_came != seq_no) {
+                            throw new Exception("Sequence number mismatch");
+                        }
                         System.out.println("Other Client:" + chunks[0]);
                     }
 
@@ -275,8 +275,8 @@ public class Client {
             // generate session key for client-server
             sessionKey = dh.computeSharedSecret();
 
+            KeyedHash khObj = new KeyedHash();
             while (true) {
-                KeyedHash khObj = new KeyedHash();
 
                 System.out.println("Choose the option:\n" +
                         "1 - Get list of other clients\n" +
@@ -292,17 +292,25 @@ public class Client {
 
                         String clientList = Helper.recvDecrypt(objIn, sessionKey);
                         System.out.println("Client list:\n" + clientList);
-
                     } catch (Exception e) {
                         e.printStackTrace();
                         break;
                     }
 
                 } else if (option == 2) {
-
-                    // TODO: List all clients with their IP and client ID
+                    Helper.sendEncrypt(objOut, "talkToAnother", sessionKey);
                     System.out.print("Enter the client ID you want to connect to: ");
                     int other_client_id = cin.nextInt();
+                    Helper.sendEncrypt(objOut, Integer.toString(other_client_id), sessionKey);
+                    String response = Helper.recvDecrypt(objIn, sessionKey);
+                    if (response.equals("success")) {
+
+                    } else {
+                        System.out.println("Invalid ID or other client is busy");
+                        continue;
+
+                    }
+
 
                     // TODO: get session key, ticket and ip of other client from server
                     byte[] ticket_byte = new byte[128];
@@ -322,18 +330,18 @@ public class Client {
                     clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
                     clientThread.clientObjOut.flush();
 
-					// receiving challenge from other client
-					seq_no++;
-					byte[] handshake_msg = (byte[]) clientThread.clientObjIn.readObject();
+                    // receiving challenge from other client
+                    seq_no++;
+                    byte[] handshake_msg = (byte[]) clientThread.clientObjIn.readObject();
                     byte[] sha = (byte[]) clientThread.clientObjIn.readObject();
                     long challenge_recv = 0;
-                    if(Util.checkIntegrity(handshake_msg, sha, CC_sessionKey)){
+                    if (Util.checkIntegrity(handshake_msg, sha, CC_sessionKey)) {
                         // validate for seq_no and nonce in handshake_byte
                         byte[] decrypt_msg = khObj.decrypt(handshake_msg, CC_sessionKey);
                         handshake_str = new String(decrypt_msg);
                         String[] chunks = handshake_str.split("[" + delimiter + "]");
                         int sq_no_came = Integer.parseInt(chunks[2]);
-                        if(sq_no_came != seq_no){
+                        if (sq_no_came != seq_no) {
                             throw new Exception("Sequence number mismatch");
                         }
 
@@ -367,17 +375,17 @@ public class Client {
                         clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
                         clientThread.clientObjOut.flush();
 
-						seq_no++;
-						byte[] client_msgs = (byte[]) clientThread.clientObjIn.readObject();
+                        seq_no++;
+                        byte[] client_msgs = (byte[]) clientThread.clientObjIn.readObject();
                         sha = (byte[]) clientThread.clientObjIn.readObject();
-                        if(Util.checkIntegrity(client_msgs, sha, CC_sessionKey)){
+                        if (Util.checkIntegrity(client_msgs, sha, CC_sessionKey)) {
                             byte[] decrypt_msg = khObj.decrypt(client_msgs, CC_sessionKey);
                             str = new String(decrypt_msg);
-							String[] chunks = str.split("[" + delimiter + "]");
-							int sq_no_came = Integer.parseInt(chunks[1]);
-							if(sq_no_came != seq_no){
-								throw new Exception("Sequence number mismatch");
-							}
+                            String[] chunks = str.split("[" + delimiter + "]");
+                            int sq_no_came = Integer.parseInt(chunks[1]);
+                            if (sq_no_came != seq_no) {
+                                throw new Exception("Sequence number mismatch");
+                            }
                             System.out.println("Other Client:" + chunks[0]);
                         }
                     }

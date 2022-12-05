@@ -13,6 +13,11 @@ public class Helper {
     public static void sendEncrypt(ObjectOutputStream objOut, String message, byte[] sessionKey) throws Exception {
         // encrypt the message
         byte[] plaintext = message.getBytes(StandardCharsets.UTF_8);
+        sendEncrypt(objOut, plaintext, sessionKey);
+    }
+
+    public static void sendEncrypt(ObjectOutputStream objOut, byte[] plaintext, byte[] sessionKey) throws Exception {
+        // encrypt the message
         byte[] ciphertext = KeyedHash.encrypt(plaintext, sessionKey);
 
         // create hash for integrity verification
@@ -28,6 +33,12 @@ public class Helper {
     }
 
     public static String recvDecrypt(ObjectInputStream objIn, byte[] sessionKey) throws Exception {
+        // receive and decrypt the message
+        byte[] plaintext = recvDecryptBytes(objIn, sessionKey);
+        return new String(plaintext);
+    }
+
+    public static byte[] recvDecryptBytes(ObjectInputStream objIn, byte[] sessionKey) throws Exception {
         // receive and decrypt the message
         byte[] ciphertext = (byte[]) objIn.readObject();
         byte[] plaintext = KeyedHash.decrypt(ciphertext, sessionKey);
@@ -47,7 +58,7 @@ public class Helper {
             throw new Exception("Integrity hash not matching");
         }
 
-        return new String(plaintext);
+        return plaintext;
     }
 
     public static byte[] trimNullBytes(byte[] bytes) {
