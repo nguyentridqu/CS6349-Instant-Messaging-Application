@@ -253,6 +253,19 @@ public final class Util {
 		return null;
 	}
 
+	public static byte[] encrypt(byte[] message, RSAPublicKey publicKey) {
+		try {
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+			return cipher.doFinal(message);
+		} catch (Exception e) {
+			System.out.println("Failed to encrypt message");
+			System.out.println(e);
+		}
+
+		return null;
+	}
+
 	public static String decrypt(byte[] message, RSAPrivateKey privateKey) {
 		try{
 			Cipher cipher = Cipher.getInstance("RSA");
