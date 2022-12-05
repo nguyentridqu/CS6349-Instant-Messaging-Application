@@ -84,6 +84,7 @@ public class KeyedHash {
         random.nextBytes(key);
 
         byte[] res = decrypt(encrypt(test.getBytes(StandardCharsets.UTF_8), key), key);
+        res = Helper.trimNullBytes(res);
         String s = new String(res, StandardCharsets.UTF_8);
 
         System.out.println(s);
