@@ -12,6 +12,7 @@ public class Client {
     private static int clientID;
     private static int RSAkeyLen = 1024;
     private static int DHkeyLen = 512;
+    private static int TTL = 2000;
     private static RSAPrivateKey RSAprivateKey;
     private static RSAPublicKey RSApublicKey;
     private static ServerSocket clientSock;
@@ -301,20 +302,29 @@ public class Client {
                     Helper.sendEncrypt(objOut, "talkToAnother", sessionKey);
                     System.out.print("Enter the client ID you want to connect to: ");
                     int other_client_id = cin.nextInt();
+
                     Helper.sendEncrypt(objOut, Integer.toString(other_client_id), sessionKey);
                     String response = Helper.recvDecrypt(objIn, sessionKey);
-                    if (response.equals("success")) {
-
-                    } else {
+                    if (response.equals("failure")) {
                         System.out.println("Invalid ID or other client is busy");
                         continue;
-
                     }
 
+                    String otherIP = Helper.recvDecrypt(objIn,sessionKey);
+                    byte[] CC_sessionKey = Helper.recvDecryptBytes(objIn,sessionKey);
+                    byte[] ticket_byte = Helper.recvDecryptBytes(objIn,sessionKey);
+                    byte[] ts = Helper.recvDecryptBytes(objIn,sessionKey);
 
-                    // TODO: get session key, ticket and ip of other client from server
-                    byte[] ticket_byte = new byte[128];
-                    byte[] CC_sessionKey = new byte[128];
+                    long currentTime = System.currentTimeMillis();
+                    long timeStamp = Helper.bytesToLong(ts);
+                    if (timeStamp + TTL < currentTime) {
+                        throw new Exception("TTL expires");
+                    }
+
+                    System.out.println("Other IP:" + otherIP);
+                    System.out.println("Session Key:" + Helper.bytesToHexString(CC_sessionKey));
+                    System.out.println("Ticket:" + Helper.bytesToHexString(ticket_byte));
+                    System.out.println("Time stamp:" + timeStamp);
 
                     // TODO: establish socket connection with other client
 

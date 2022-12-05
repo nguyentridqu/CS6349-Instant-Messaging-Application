@@ -28,8 +28,8 @@ public class ClientObj {
         return ip;
     }
 
-    public boolean getPort () {
-        return busy;
+    public int getPort () {
+        return port;
     }
 
     // overwride toString for printing message type

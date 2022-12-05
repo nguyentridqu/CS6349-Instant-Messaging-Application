@@ -9,6 +9,7 @@ public class Server {
     private static int serverID;
     private static int RSAkeyLen = 1024;
     private static int DHkeyLen = 512;
+    private static int CCKeyLen = 64;
     private static int TTL = 2000;
     private static PrivateKey RSAprivateKey;
     private static PublicKey RSApublicKey;
@@ -47,6 +48,16 @@ public class Server {
                 }
             }
             return valid && (otherClientId != thisClientId);
+        }
+
+        public String getClientIP(int otherClientId) {
+            boolean valid = false;
+            for (ClientObj client : clientObjs) {
+                if (client.getId() == otherClientId) {
+                    return client.getIp();
+                }
+            }
+            return "";
         }
 
         public String getClientList() {
@@ -180,20 +191,24 @@ public class Server {
                                 Helper.sendEncrypt(objOut, "success", sessionKey);
                                 System.out.println("success");
 
+                                // get other client's IP address
+                                String otherIP = getClientIP(otherClientID);
+
                                 // generate client-client session key
                                 SecureRandom random = new SecureRandom();
-                                byte[] CCkey = new byte[128];
+                                byte[] CCkey = new byte[CCKeyLen];
                                 random.nextBytes(CCkey);
 
                                 // ticket for second client (encrypted session key with second's public key)
                                 RSAPublicKey otherRSAPubKey = Util.getPublicKey(otherClientID);
-                                byte[] ticket = Util.encrypt(CCkey, clientRSAPubKey);
+                                byte[] ticket = Util.encrypt(CCkey, otherRSAPubKey);
 
                                 // timestamp for freshness
                                 long timestamp = System.currentTimeMillis();
                                 byte[] ts = Helper.longToBytes(timestamp);
 
                                 // send key, ticket, and timestamp
+                                Helper.sendEncrypt(objOut, otherIP, sessionKey);
                                 Helper.sendEncrypt(objOut, CCkey, sessionKey);
                                 Helper.sendEncrypt(objOut, ticket, sessionKey);
                                 Helper.sendEncrypt(objOut, ts, sessionKey);
