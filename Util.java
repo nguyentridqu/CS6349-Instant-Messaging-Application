@@ -5,6 +5,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 import java.security.*;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.interfaces.*;
+import javax.crypto.Cipher;
 
 public final class Util {
     private static String metaFile = "metadata.txt";
@@ -38,7 +41,7 @@ public final class Util {
 	}
 
 	// generate RSA public and private key and write it to file
-	public static KeyPair generateRSAKeyPairAndSaveToFile(int keyLen, int ID){
+	public static KeyPair generateRSAKeyPair(int keyLen, int ID){
 		KeyPair pair = null;
 		try {
 			KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
@@ -166,5 +169,118 @@ public final class Util {
 			System.out.println(e);
 		}
 		return null;
+	}
+
+	// gets a random value between 0 and upperBound, used for auth
+	public static int getRandom(int upperBound) {
+		Random rand = new Random();
+
+		// get a int between [0 to (upperBound - 1)].
+		return rand.nextInt(upperBound);
+	}
+
+	// get a public key from a file
+	public static RSAPublicKey getPublicKey(int id) {
+		File pubKeyFile = new File("keys/public_key_" + id + ".key");
+		byte[] pubKeyBytes = null;
+		KeyFactory keyFactory = null;
+		RSAPublicKey pubKey = null;
+
+		// read public key DER file
+		try {
+			keyFactory = KeyFactory.getInstance("RSA");
+			DataInputStream dis = new DataInputStream(new FileInputStream(pubKeyFile));
+			pubKeyBytes = new byte[(int)pubKeyFile.length()];
+			dis.readFully(pubKeyBytes);
+			dis.close();
+		} catch (Exception e) {
+			System.out.println("Failed to read public key from file");
+			System.out.println(e);
+		}
+		
+		// decode public key
+		try{
+			X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(pubKeyBytes);
+			pubKey = (RSAPublicKey) keyFactory.generatePublic(pubSpec);
+		} catch (Exception e) {
+			System.out.println("Failed to decode public key");
+			System.out.println(e);
+		}
+
+		return pubKey;
+	}
+
+	public static RSAPrivateKey getPrivatKey(int id) {
+		File privKeyFile = new File("keys/private_key_" + id + ".key");
+		byte[] privKeyBytes = null;
+		KeyFactory keyFactory = null;
+		RSAPrivateKey privKey = null;
+
+		// read private key DER file
+		try {
+			keyFactory = KeyFactory.getInstance("RSA");
+			DataInputStream dis = new DataInputStream(new FileInputStream(privKeyFile));
+			privKeyBytes = new byte[(int)privKeyFile.length()];
+			dis.read(privKeyBytes);
+			dis.close();
+		} catch (Exception e) {
+			System.out.println("Failed to read public key from file");
+			System.out.println(e);
+		}
+
+		// decode private key
+		try{
+			PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
+            privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);
+		} catch (Exception e) {
+			System.out.println("Failed to decode private key");
+			System.out.println(e);
+		}
+
+		return privKey;
+	}
+
+	public static byte[] encrypt(String message, RSAPublicKey publicKey) {
+		try {
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+			return cipher.doFinal(message.getBytes());
+		} catch (Exception e) {
+			System.out.println("Failed to encrypt message");
+			System.out.println(e);
+		}
+
+		return null;
+	}
+
+	public static String decrypt(byte[] message, RSAPrivateKey privateKey) {
+		try{
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			return new String(cipher.doFinal(message));
+		} catch (Exception e) {
+			System.out.println("Failed to encrypt message");
+			System.out.println(e);
+		}
+
+		return null;
+	}
+
+	public static void writePublicKey(int id, PublicKey key) {
+		try (FileOutputStream fos = new FileOutputStream("public_key_" + id + ".key")) {
+			fos.write(key.getEncoded());
+		} catch (Exception e) {
+			System.out.println("Failed to write public key to file");
+			System.out.println(e);
+		}
+	}
+
+	public static void writePrivateKey(int id, PrivateKey key) {
+		try (FileOutputStream fos = new FileOutputStream("private_key_" + id + ".key")) {
+			fos.write(key.getEncoded());
+		} catch (Exception e) {
+			System.out.println("Failed to write private key to file");
+			System.out.println(e);
+		}
 	}
 }

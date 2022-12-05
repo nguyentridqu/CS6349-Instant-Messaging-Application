@@ -3,13 +3,14 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Scanner;
+import java.security.interfaces.*;
 
 public class Client {
 	private static int clientID;
 	private static int RSAkeyLen = 1024;
 	private static int DHkeyLen = 512;
-	private static PrivateKey RSAprivateKey;
-	private static PublicKey RSApublicKey;
+	private static RSAPrivateKey RSAprivateKey;
+	private static RSAPublicKey RSApublicKey;
 	private static ServerSocket clientSock;
 	private static String ip;
 	private static int port;
@@ -91,6 +92,7 @@ public class Client {
 		Message msg = new Message("");
 		msg.setIp(ip);
 		msg.setPort(port);
+		msg.setId(clientID);
 
 		return msg;
 	}
@@ -144,11 +146,16 @@ public class Client {
 	public static void main(String[] args) {
 		clientID = Integer.parseInt(args[0]);
 
-		//generate key pair and store it to file
-		KeyPair pair = Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, clientID);
-		RSAprivateKey = pair.getPrivate();
-		RSApublicKey = pair.getPublic();
-		Util.writeBytesToFile("public_key_" + clientID, RSApublicKey.getEncoded());
+		// generate key pair and store it to file, only used once
+		// KeyPair pair = Util.generateRSAKeyPair(RSAkeyLen, clientID);
+		// RSAprivateKey = pair.getPrivate();
+		// RSApublicKey = pair.getPublic();
+		// Util.writePublicKey(clientID, RSApublicKey);
+		// Util.writePrivateKey(clientID, RSAprivateKey);
+
+		// get client keys from file
+		RSApublicKey = Util.getPublicKey(clientID);
+		RSAprivateKey = Util.getPrivatKey(clientID);
 
 		// make in/out streams for server
 		connectToServer();
@@ -162,9 +169,17 @@ public class Client {
 		Util.sendMsg(objOut, msg);
 		System.out.println("Sent message");
 
-		// read response
+		// read challenge from server
 		Message serverMsg = Util.recieveMsg(objIn);
-		System.out.println("Received message");
+		System.out.println("Received encrypted challenge: " + serverMsg.getChallenge());
+
+		// decrypt challenge
+		String challenge = Util.decrypt(serverMsg.getChallenge(), RSAprivateKey);
+		System.out.println("Decrypted challenge: " + challenge);
+
+		// send decrypted challenge back to server
+		serverMsg = new Message(challenge);
+		Util.sendMsg(objOut, serverMsg);
 
 		while(true) {
 			System.out.println("Choose the option:\n1 - Get session key from the server\n2 - Disconnect");

@@ -3,13 +3,14 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.*;
+import java.security.interfaces.*;
 
 public class Server {
 	private static int serverID;
 	private static int RSAkeyLen = 1024;
 	private static int DHkeyLen = 512;
-	private static PrivateKey RSAprivateKey;
-	private static PublicKey RSApublicKey;
+	private static RSAPrivateKey RSAprivateKey;
+	private static RSAPublicKey RSApublicKey;
 	private static int port;
 	private static String ip = null;
 	private static ServerSocket serverSock;
@@ -70,21 +71,38 @@ public class Server {
 			// set outputs streams from socket connection
 			setOutputStream();
 
-			// get message from socket
-			// TODO - process client message
+			// get message from socket, holds ip and port client is listening
+			// for other client connections on
 			Message clientMsg = Util.recieveMsg(objIn);
 			System.out.println(clientMsg);
 			System.out.println("Received message");
 
 			// add client to list of clients
-			clientObjs.add(new ClientObj(nextId.getAndIncrement(), clientMsg.getIp(), clientMsg.getPort()));
+			clientObjs.add(new ClientObj(clientMsg.getId(), clientMsg.getIp(), clientMsg.getPort()));
 
-			// respond to client
-			Message msg = new Message("");
+			// get public key of client
+			RSAPublicKey clientRSAPubKey = Util.getPublicKey(clientMsg.getId());
+
+			// respond to client with authentication challenge
+			int challenge = Util.getRandom(100000);	// get rand number as challenge
+			Message msg = new Message("");	// create message with encrypted challenge
+			msg.setChallenge(Util.encrypt(String.valueOf(challenge), clientRSAPubKey));
 			Util.sendMsg(objOut, msg);
+			System.out.println("Sent challenge: " + challenge + ", to client " + clientMsg.getId());
 
-			System.out.println("Sent message");
-
+			// read challenge response from client
+			Message reply = Util.recieveMsg(objIn);
+			System.out.println("Received challenge reply " + reply.getMsg() + ", from client " + clientMsg.getId());
+			
+			// check if client is authenticated, if not then abort
+			String challengeReply = reply.getMsg();
+			if (challengeReply.equals(String.valueOf(challenge))) {
+				System.out.println("Client successfully authenticated");
+			} else {
+				System.out.println("Client failed authenticated");
+				Thread.currentThread().interrupt();
+				return;
+			}
 
 			// display clients the servers tracked
 			printClients();
@@ -95,10 +113,6 @@ public class Server {
 				System.out.println("Error establishing D-H key exchange");
 				closeOutputStreams();
 			}
-
-
-
-
 
 			closeOutputStreams();
 		} // end run
@@ -155,12 +169,16 @@ public class Server {
 	public static void main(String[] args) {
 		serverID = Integer.parseInt(args[0]);
 
+		//generate key pair and store it to file, only used once
+		// KeyPair pair = Util.generateRSAKeyPair(RSAkeyLen, serverID);
+		// PrivateKey RSAprivateKey = pair.getPrivate();
+		// PublicKey RSApublicKey = pair.getPublic();
+		// Util.writePublicKey(serverID, RSApublicKey);
+		// Util.writePrivateKey(serverID, RSAprivateKey);
 
-		//generate key pair and store it to file
-		KeyPair pair = Util.generateRSAKeyPairAndSaveToFile(RSAkeyLen, serverID);
-		RSAprivateKey = pair.getPrivate();
-		RSApublicKey = pair.getPublic();
-		Util.writeBytesToFile("public_key_" + serverID, RSApublicKey.getEncoded());
+		// get server keys from file
+		RSApublicKey = Util.getPublicKey(serverID);
+		RSAprivateKey = Util.getPrivatKey(serverID);
 
 		// create server socket and set my ip and port
 		createServerSocket();
