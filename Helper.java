@@ -2,6 +2,7 @@ import javax.sound.midi.SysexMessage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -9,6 +10,12 @@ import java.util.Arrays;
 
 public class Helper {
     private static String hashFunction = "SHA-256";
+
+    public static byte[] combineBytes(byte[] first, byte[] second) {
+        byte[] combined = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, combined, first.length, second.length);
+        return combined;
+    }
 
     public static void sendEncrypt(ObjectOutputStream objOut, String message, byte[] sessionKey) throws Exception {
         // encrypt the message
@@ -22,8 +29,7 @@ public class Helper {
 
         // create hash for integrity verification
         MessageDigest digest = MessageDigest.getInstance(hashFunction);
-        byte[] messageKey = Arrays.copyOf(plaintext, plaintext.length + sessionKey.length);
-        System.arraycopy(sessionKey, 0, messageKey, plaintext.length, sessionKey.length);
+        byte[] messageKey = combineBytes(plaintext, sessionKey);
         byte[] hash = digest.digest(messageKey);
 
         // send message
@@ -47,8 +53,7 @@ public class Helper {
         // receive the hash and verify integrity
         byte[] hashReceived = (byte[]) objIn.readObject();
         MessageDigest digest = MessageDigest.getInstance(hashFunction);
-        byte[] messageKey = Arrays.copyOf(plaintext, plaintext.length + sessionKey.length);
-        System.arraycopy(sessionKey, 0, messageKey, plaintext.length, sessionKey.length);
+        byte[] messageKey = combineBytes(plaintext, sessionKey);
         byte[] hashCalculated = digest.digest(messageKey);
 
         if (Arrays.equals(hashCalculated, hashReceived)) {
@@ -77,6 +82,31 @@ public class Helper {
             hexString += String.format("%02x", b);
         }
         return hexString;
+    }
+
+    public static long bytesToLong(byte[] longBytes){
+        ByteBuffer byteBuffer = ByteBuffer.allocate(Long.BYTES);
+        byteBuffer.put(longBytes);
+        byteBuffer.flip();
+        return byteBuffer.getLong();
+    }
+
+    public static byte[] longToBytes(long data) {
+        return new byte[]{
+                (byte) ((data >> 56) & 0xff),
+                (byte) ((data >> 48) & 0xff),
+                (byte) ((data >> 40) & 0xff),
+                (byte) ((data >> 32) & 0xff),
+                (byte) ((data >> 24) & 0xff),
+                (byte) ((data >> 16) & 0xff),
+                (byte) ((data >> 8) & 0xff),
+                (byte) ((data >> 0) & 0xff),
+        };
+    }
+
+    public static void main(String[] args) {
+        long num = 123456789101112L;
+        System.out.println(bytesToLong(longToBytes(num)));
     }
 
 }
