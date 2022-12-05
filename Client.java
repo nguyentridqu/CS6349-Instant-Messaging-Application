@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
@@ -25,6 +26,12 @@ public class Client {
     private static ObjectOutputStream objOut = null;
     private static InputStream in = null;
     private static ObjectInputStream objIn = null;
+	// client connections
+	private static Socket clientSocket = null;
+    private static OutputStream clientOut = null;
+    private static ObjectOutputStream clientObjOut = null;
+    private static InputStream clientIn = null;
+    private static ObjectInputStream clientObjIn = null;
     private static String delimiter = "|";
 
     // listens for incoming messages from other clients
@@ -205,6 +212,34 @@ public class Client {
         }
     }
 
+	// make in/out streams for server
+    private static void connectToClient(String ip, String port) {
+        // get servers ports so connections can be made
+        int clientPort = Integer.parseInt(port);
+
+        System.out.println("Client is at " + ip + ":" + clientPort);
+
+        // try to connect to server
+        try {
+            clientSocket = new Socket(ip, clientPort);
+            System.out.println("Successfully connected to client ");
+        } catch (Exception e) {
+            System.out.println("Failed to connect to client ");
+            System.out.println(e);
+        }
+
+        // create in and out streams
+        try {
+            clientOut = clientSocket.getOutputStream();
+            clientObjOut = new ObjectOutputStream(clientOut);
+            clientIn = clientSocket.getInputStream();
+            clientObjIn = new ObjectInputStream(clientIn);
+        } catch (Exception e) {
+            System.out.println("Failed to create client input and output streams");
+            System.out.println(e);
+        }
+    }
+
     // close output streams
     private static void closeOutputStreams() {
         // close streams and socket
@@ -294,13 +329,18 @@ public class Client {
                         Helper.sendEncrypt(objOut, "getClientList", sessionKey);
 
                         String clientList = Helper.recvDecrypt(objIn, sessionKey);
-                        System.out.println("Client list:\n" + clientList);
+						
+                        // System.out.println("Client list:\n" + clientList);
+						ArrayList<ClientObj> clients = Util.buildClientList(clientList);
+						Util.printClientList(clients);
+
                     } catch (Exception e) {
                         e.printStackTrace();
                         break;
                     }
 
                 } else if (option == 2) {
+					
                     Helper.sendEncrypt(objOut, "talkToAnother", sessionKey);
                     System.out.print("Enter the client ID you want to connect to: ");
                     int other_client_id = cin.nextInt();
@@ -313,6 +353,7 @@ public class Client {
                     }
 
                     String otherIP = Helper.recvDecrypt(objIn,sessionKey);
+					String otherPort = Helper.recvDecrypt(objIn,sessionKey);
                     byte[] CC_sessionKey = Helper.recvDecryptBytes(objIn,sessionKey);
                     byte[] ticket_byte = Helper.recvDecryptBytes(objIn,sessionKey);
                     byte[] ts = Helper.recvDecryptBytes(objIn,sessionKey);
@@ -323,12 +364,13 @@ public class Client {
                         throw new Exception("TTL expires");
                     }
 
-                    System.out.println("Other IP:" + otherIP);
+                    System.out.println("Other IP:" + otherIP + ":" + otherPort);
                     System.out.println("Session Key:" + Helper.bytesToHexString(CC_sessionKey));
                     System.out.println("Ticket:" + Helper.bytesToHexString(ticket_byte));
                     System.out.println("Time stamp:" + timeStamp);
 
-                    // TODO: establish socket connection with other client
+                    // establish socket connection with other client
+					connectToClient(otherIP, otherPort);
 
                     int seq_no = 0;
                     // sending ticket to other client
@@ -337,15 +379,15 @@ public class Client {
                     String handshake_str = nonce + delimiter + seq_no + delimiter;
                     byte[] handshake_byte = handshake_str.getBytes();
                     byte[] enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
-                    clientThread.clientObjOut.writeObject(ticket_byte);
-                    clientThread.clientObjOut.writeObject(enc_msg);
-                    clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
-                    clientThread.clientObjOut.flush();
+                    clientObjOut.writeObject(ticket_byte);
+                    clientObjOut.writeObject(enc_msg);
+                    clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+                    clientObjOut.flush();
 
                     // receiving challenge from other client
                     seq_no++;
-                    byte[] handshake_msg = (byte[]) clientThread.clientObjIn.readObject();
-                    byte[] sha = (byte[]) clientThread.clientObjIn.readObject();
+                    byte[] handshake_msg = (byte[]) clientObjIn.readObject();
+                    byte[] sha = (byte[]) clientObjIn.readObject();
                     long challenge_recv = 0;
                     if (Util.checkIntegrity(handshake_msg, sha, CC_sessionKey)) {
                         // validate for seq_no and nonce in handshake_byte
@@ -369,9 +411,9 @@ public class Client {
                     handshake_str = challenge_recv + delimiter + seq_no + delimiter;
                     handshake_byte = handshake_str.getBytes();
                     enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
-                    clientThread.clientObjOut.writeObject(enc_msg);
-                    clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
-                    clientThread.clientObjOut.flush();
+                    clientObjOut.writeObject(enc_msg);
+                    clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+                    clientObjOut.flush();
 
                     // sending messages
                     while (true) {
@@ -383,13 +425,13 @@ public class Client {
                         seq_no++;
                         str = str + delimiter + seq_no + delimiter;
                         enc_msg = khObj.encrypt(str.getBytes(), CC_sessionKey);
-                        clientThread.clientObjOut.writeObject(enc_msg);
-                        clientThread.clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
-                        clientThread.clientObjOut.flush();
+                        clientObjOut.writeObject(enc_msg);
+                        clientObjOut.writeObject(Util.computeSHA(Util.appendByte(enc_msg, CC_sessionKey)));
+                        clientObjOut.flush();
 
                         seq_no++;
-                        byte[] client_msgs = (byte[]) clientThread.clientObjIn.readObject();
-                        sha = (byte[]) clientThread.clientObjIn.readObject();
+                        byte[] client_msgs = (byte[]) clientObjIn.readObject();
+                        sha = (byte[]) clientObjIn.readObject();
                         if (Util.checkIntegrity(client_msgs, sha, CC_sessionKey)) {
                             byte[] decrypt_msg = khObj.decrypt(client_msgs, CC_sessionKey);
                             str = new String(decrypt_msg);

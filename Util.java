@@ -296,4 +296,51 @@ public final class Util {
 			System.out.println(e);
 		}
 	}
+
+	public static void printClientList(ArrayList<ClientObj> clientList) {
+		String output = "";
+
+		for(int i = 0; i < clientList.size(); i++){
+			ClientObj curClient = clientList.get(i);
+			if(curClient.isBusy()) {
+				output += "Client ID: " + curClient.getId() + " | Status: busy | IP: " + curClient.getIp() + ":" + curClient.getPort();
+			} else {
+				output += "Client ID: " + curClient.getId() + " | Status: idle | IP: " + curClient.getIp() + ":" + curClient.getPort();
+			}
+			output += "\n";
+		}
+
+		System.out.println(output);
+	}
+
+	public static ArrayList<ClientObj> buildClientList(String input) {
+		ArrayList<ClientObj> clientList = new ArrayList<>();
+		List<String> clientInfo = Arrays.asList(input.split("\n"));
+		// System.out.println(input);
+
+		for(int i = 0; i < clientInfo.size(); i++){
+			String[] tokens = clientInfo.get(i).split(",");
+			ClientObj curClient = new ClientObj(Integer.parseInt(tokens[0]), tokens[2], Integer.parseInt(tokens[3]));
+
+			if(tokens[1].equals("busy")){
+				curClient.setIsBusy(true);
+			} else {
+				curClient.setIsBusy(false);
+			}
+
+			clientList.add(curClient);
+		}
+
+		return clientList;
+	}
+
+	public static ClientObj getClientObj(ArrayList<ClientObj> clientList, int clientId) throws ArrayIndexOutOfBoundsException {
+		for(int i = 0; i < clientList.size(); i++){
+			if(clientList.get(i).getId() == clientId) {
+				return clientList.get(i);
+			}
+		}
+
+		throw new ArrayIndexOutOfBoundsException();
+	}
 }

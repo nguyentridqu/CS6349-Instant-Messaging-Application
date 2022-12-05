@@ -36,9 +36,9 @@ public class ClientObj {
     @Override
 	public String toString() {
         if(busy) {
-            return "Client ID: " + id + " | Status: busy | IP: " + ip + ":" + port;
+            return id + ",busy," + ip + "," + port;
         } else {
-            return "Client ID: " + id + " | Status: available | IP: " + ip + ":" + port;
+            return id + ",idle," + ip + "," + port;
         }
 	}
 }

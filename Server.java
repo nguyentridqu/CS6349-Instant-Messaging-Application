@@ -51,10 +51,18 @@ public class Server {
         }
 
         public String getClientIP(int otherClientId) {
-            boolean valid = false;
             for (ClientObj client : clientObjs) {
                 if (client.getId() == otherClientId) {
                     return client.getIp();
+                }
+            }
+            return "";
+        }
+
+		public String getClientPort(int otherClientId) {
+            for (ClientObj client : clientObjs) {
+                if (client.getId() == otherClientId) {
+                    return String.valueOf(client.getPort());
                 }
             }
             return "";
@@ -64,9 +72,9 @@ public class Server {
             String clientList = "";
             for (ClientObj client : clientObjs) {
                 clientList += client.toString();
-                if (client.getId() == thisClientId) {
-                    clientList += " (self)";
-                }
+                // if (client.getId() == thisClientId) {
+                //     clientList += " (self)";
+                // }
                 clientList += "\n";
             }
             return clientList;
@@ -193,6 +201,8 @@ public class Server {
 
                                 // get other client's IP address
                                 String otherIP = getClientIP(otherClientID);
+								// get other client's port number
+								String otherPort = getClientPort(otherClientID);
 
                                 // generate client-client session key
                                 SecureRandom random = new SecureRandom();
@@ -209,6 +219,7 @@ public class Server {
 
                                 // send key, ticket, and timestamp
                                 Helper.sendEncrypt(objOut, otherIP, sessionKey);
+								Helper.sendEncrypt(objOut, otherPort, sessionKey);
                                 Helper.sendEncrypt(objOut, CCkey, sessionKey);
                                 Helper.sendEncrypt(objOut, ticket, sessionKey);
                                 Helper.sendEncrypt(objOut, ts, sessionKey);
