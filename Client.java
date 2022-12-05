@@ -57,15 +57,16 @@ public class Client {
 			try {
 				int seq_no = 0;
 				// receive ticket from other client
-				Message ticket = Util.recieveMsg(clientObjIn);
+				byte[] ticket = (byte[]) clientObjIn.readObject();
 				// TODO extract key from ticket
 				byte[] CC_sessionKey = new byte[128];
-				Message handshake_msg = Util.recieveMsg(clientObjIn);
-				byte[] handshake_byte = khObj.decrypt(handshake_msg.getMsg().getBytes(), CC_sessionKey);
+
+				byte[] handshake_byte = (byte[]) clientObjIn.readObject();
+				handshake_byte = khObj.decrypt(handshake_byte, CC_sessionKey);
 				String handshake_str = new String(handshake_byte);
-				Message sha_msg = Util.recieveMsg(clientObjIn);
+				byte[] sha_msg = (byte[]) clientObjIn.readObject();
 				long challenge_recv = 0;
-				if(Util.checkIntegrity(handshake_byte, sha_msg.getMsg().getBytes(), CC_sessionKey)){
+				if(Util.checkIntegrity(handshake_byte, sha_msg, CC_sessionKey)){
 					String[] chunks = handshake_str.split("[" + delimiter + "]");
 					int sq_no_came = Integer.parseInt(chunks[1]);
 					if(sq_no_came != seq_no){
@@ -87,12 +88,12 @@ public class Client {
 
 				// receiving response of challenge
 				seq_no++;
-				handshake_msg = Util.recieveMsg(clientObjIn);
-				handshake_byte = khObj.decrypt(handshake_msg.getMsg().getBytes(), CC_sessionKey);
-				handshake_msg = Util.recieveMsg(clientObjIn);
-				if(Util.checkIntegrity(handshake_byte, handshake_msg.getMsg().getBytes(), CC_sessionKey)){
+				handshake_byte = (byte[]) clientObjIn.readObject();
+				byte[] decrypt_msg = khObj.decrypt(handshake_byte, CC_sessionKey);
+				sha_msg = (byte[]) clientObjIn.readObject();
+				if(Util.checkIntegrity(decrypt_msg, sha_msg, CC_sessionKey)){
 					// validate for seq_no and nonce in handshake_byte
-					handshake_str = new String(handshake_byte);
+					handshake_str = new String(decrypt_msg);
 					String[] chunks = handshake_str.split("[" + delimiter + "]");
 					int sq_no_came = Integer.parseInt(chunks[1]);
 					if(sq_no_came != seq_no){
@@ -108,10 +109,10 @@ public class Client {
 				Scanner cin = new Scanner(System.in);
 				while(true) {
 					seq_no++;
-					Message client_msgs = Util.recieveMsg(clientObjIn);
-					byte[] decrypt_msg = khObj.decrypt(client_msgs.getMsg().getBytes(), CC_sessionKey);
-					client_msgs = Util.recieveMsg(clientObjIn);
-					if (Util.checkIntegrity(decrypt_msg, client_msgs.getMsg().getBytes(), CC_sessionKey)) {
+					byte[] client_msgs = (byte[]) clientObjIn.readObject();
+					decrypt_msg = khObj.decrypt(client_msgs, CC_sessionKey);
+					client_msgs = (byte[]) clientObjIn.readObject();
+					if (Util.checkIntegrity(decrypt_msg, client_msgs, CC_sessionKey)) {
 						String str = new String(decrypt_msg);
 						String[] chunks = str.split("[" + delimiter + "]");
 						int sq_no_came = Integer.parseInt(chunks[1]);
@@ -284,7 +285,7 @@ public class Client {
 					int other_client_id = cin.nextInt();
 
 					// TODO: get session key, ticket and ip of other client from server
-					Message Ticket = new Message("");
+					byte[] ticket_byte = new byte[128];
 					byte[] CC_sessionKey = new byte[128];
 
 					// TODO: establish socket connection with other client
@@ -294,7 +295,6 @@ public class Client {
 					seq_no++;
 					long nonce = new Random().nextLong();
 					String handshake_str = nonce + delimiter + seq_no + delimiter;
-					byte[] ticket_byte = Ticket.getMsg().getBytes();
 					byte[] handshake_byte = handshake_str.getBytes();
 					byte[] enc_msg = khObj.encrypt(handshake_byte, CC_sessionKey);
 					clientThread.clientObjOut.writeObject(ticket_byte);
@@ -304,13 +304,13 @@ public class Client {
 
 					// receiving challenge from other client
 					seq_no++;
-					Message handshake_msg = Util.recieveMsg(clientThread.clientObjIn);
-					handshake_byte = khObj.decrypt(handshake_msg.getMsg().getBytes(), CC_sessionKey);
-					handshake_msg = Util.recieveMsg(clientThread.clientObjIn);
+					byte[] handshake_msg = (byte[]) clientThread.clientObjIn.readObject();
+					byte[] decrypt_msg = khObj.decrypt(handshake_msg, CC_sessionKey);
+					handshake_msg = (byte[]) clientThread.clientObjIn.readObject();
 					long challenge_recv = 0;
-					if(Util.checkIntegrity(handshake_byte, handshake_msg.getMsg().getBytes(), CC_sessionKey)){
+					if(Util.checkIntegrity(decrypt_msg, handshake_msg, CC_sessionKey)){
 						// validate for seq_no and nonce in handshake_byte
-						handshake_str = new String(handshake_byte);
+						handshake_str = new String(decrypt_msg);
 						String[] chunks = handshake_str.split("[" + delimiter + "]");
 						int sq_no_came = Integer.parseInt(chunks[2]);
 						if(sq_no_came != seq_no){
@@ -348,10 +348,10 @@ public class Client {
 						clientThread.clientObjOut.flush();
 
 						seq_no++;
-						Message client_msgs = Util.recieveMsg(clientThread.clientObjIn);
-						byte[] decrypt_msg = khObj.decrypt(client_msgs.getMsg().getBytes(), CC_sessionKey);
-						client_msgs = Util.recieveMsg(clientThread.clientObjIn);
-						if(Util.checkIntegrity(decrypt_msg, client_msgs.getMsg().getBytes(), CC_sessionKey)){
+						byte[] client_msgs = (byte[]) clientThread.clientObjIn.readObject();
+						decrypt_msg = khObj.decrypt(client_msgs, CC_sessionKey);
+						client_msgs = (byte[]) clientThread.clientObjIn.readObject();
+						if(Util.checkIntegrity(decrypt_msg, client_msgs, CC_sessionKey)){
 							str = new String(decrypt_msg);
 							String[] chunks = str.split("[" + delimiter + "]");
 							int sq_no_came = Integer.parseInt(chunks[1]);
