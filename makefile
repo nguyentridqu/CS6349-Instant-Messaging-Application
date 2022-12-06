@@ -4,7 +4,7 @@ JC = javac
 .java.class:
 		$(JC) $(JFLAGS) $*.java
 
-CLASSES = Server.java Client.java Util.java Message.java ClientObj.java
+CLASSES = Server.java Client.java Util.java Message.java ClientObj.java DHClient.java DHServer.java Helper.java KeyedHash.java
 
 default: classes
 
