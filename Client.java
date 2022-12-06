@@ -118,7 +118,7 @@ public class Client {
 
                 // exchange messages
                 Scanner cin = new Scanner(System.in);
-                System.out.println("Connection established with other client, waiting for other client to start chatting...");
+                System.out.println("Connection established with other client, start chatting...");
                 while (true) {
                     seq_no++;
                     byte[] client_msgs = (byte[]) clientObjIn.readObject();
@@ -134,6 +134,7 @@ public class Client {
                         System.out.println("Other Client:" + chunks[0]);
                     }
 
+                    System.out.print("You: ");
                     String str = cin.nextLine();
                     if (str.equals("!quit")) {
                         break;
@@ -410,8 +411,9 @@ public class Client {
                     clientObjOut.flush();
 
                     // sending messages
-                    System.out.println("Connection established with other client, start chatting...");
+                    System.out.println("Connection established with other client, waiting for other client to start chatting...");
                     while (true) {
+                        System.out.print("You: ");
                         String str = cin.nextLine();
                         if (str.equals("!quit")) {
                             break;
