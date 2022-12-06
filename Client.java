@@ -26,8 +26,8 @@ public class Client {
     private static ObjectOutputStream objOut = null;
     private static InputStream in = null;
     private static ObjectInputStream objIn = null;
-	// client connections
-	private static Socket clientSocket = null;
+    // client connections
+    private static Socket clientSocket = null;
     private static OutputStream clientOut = null;
     private static ObjectOutputStream clientObjOut = null;
     private static InputStream clientIn = null;
@@ -132,9 +132,9 @@ public class Client {
                         if (sq_no_came != seq_no) {
                             throw new Exception("Sequence number mismatch");
                         }
-                        if(skip == 0) {
+                        if (skip == 0) {
                             skip++;
-                        }else {
+                        } else {
                             System.out.println("Other Client:" + chunks[0]);
                         }
                     }
@@ -218,7 +218,7 @@ public class Client {
         }
     }
 
-	// make in/out streams for server
+    // make in/out streams for server
     private static void connectToClient(String ip, String port) {
         // get servers ports so connections can be made
         int clientPort = Integer.parseInt(port);
@@ -319,7 +319,7 @@ public class Client {
                         "1 - Get list of other clients\n" +
                         "2 - Connect to another client\n" +
                         "3 - Disconnect\n" +
-                        "4 - Chll out");
+                        "4 - Chill out");
                 Scanner cin = new Scanner(System.in);
                 int option = cin.nextInt();
 
@@ -329,10 +329,10 @@ public class Client {
                         Helper.sendEncrypt(objOut, "getClientList", sessionKey);
 
                         String clientList = Helper.recvDecrypt(objIn, sessionKey);
-						
+
                         // System.out.println("Client list:\n" + clientList);
-						ArrayList<ClientObj> clients = Util.buildClientList(clientList);
-						Util.printClientList(clients, clientID);
+                        ArrayList<ClientObj> clients = Util.buildClientList(clientList);
+                        Util.printClientList(clients, clientID);
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -340,7 +340,7 @@ public class Client {
                     }
 
                 } else if (option == 2) {
-					
+
                     Helper.sendEncrypt(objOut, "talkToAnother", sessionKey);
                     System.out.print("Enter the client ID you want to connect to: ");
                     int other_client_id = cin.nextInt();
@@ -352,11 +352,11 @@ public class Client {
                         continue;
                     }
 
-                    String otherIP = Helper.recvDecrypt(objIn,sessionKey);
-					String otherPort = Helper.recvDecrypt(objIn,sessionKey);
-                    byte[] CC_sessionKey = Helper.recvDecryptBytes(objIn,sessionKey);
-                    byte[] ticket_byte = Helper.recvDecryptBytes(objIn,sessionKey);
-                    byte[] ts = Helper.recvDecryptBytes(objIn,sessionKey);
+                    String otherIP = Helper.recvDecrypt(objIn, sessionKey);
+                    String otherPort = Helper.recvDecrypt(objIn, sessionKey);
+                    byte[] CC_sessionKey = Helper.recvDecryptBytes(objIn, sessionKey);
+                    byte[] ticket_byte = Helper.recvDecryptBytes(objIn, sessionKey);
+                    byte[] ts = Helper.recvDecryptBytes(objIn, sessionKey);
 
                     long currentTime = System.currentTimeMillis();
                     long timeStamp = Helper.bytesToLong(ts);
@@ -364,13 +364,13 @@ public class Client {
                         throw new Exception("TTL expires");
                     }
 
-                    System.out.println("Other IP:" + otherIP + ":" + otherPort);
-                    System.out.println("Session Key:" + Helper.bytesToHexString(CC_sessionKey));
-                    System.out.println("Ticket:" + Helper.bytesToHexString(ticket_byte));
-                    System.out.println("Time stamp:" + timeStamp);
+                    System.out.println("Other IP: " + otherIP + ":" + otherPort);
+                    System.out.println("Session Key: " + Helper.bytesToHexString(CC_sessionKey));
+                    System.out.println("Ticket: " + Helper.bytesToHexString(ticket_byte));
+                    System.out.println("Time stamp: " + timeStamp);
 
                     // establish socket connection with other client
-					connectToClient(otherIP, otherPort);
+                    connectToClient(otherIP, otherPort);
 
                     int seq_no = 0;
                     // sending ticket to other client
@@ -419,9 +419,9 @@ public class Client {
                     System.out.println("Connection established with other client, waiting for other client to start chatting...");
                     int skip = 0;
                     while (true) {
-                        if(skip == 0) {
+                        if (skip == 0) {
                             skip++;
-                        }else {
+                        } else {
                             System.out.print("You: ");
                         }
                         String str = cin.nextLine();
@@ -446,15 +446,14 @@ public class Client {
                             if (sq_no_came != seq_no) {
                                 throw new Exception("Sequence number mismatch");
                             }
-                            System.out.println("Other Client:" + chunks[0]);
+                            System.out.println("Other Client: " + chunks[0]);
                         }
                     }
                 } else if (option == 3) {
                     break;
-                }
-                else if (option == 4){
+                } else if (option == 4) {
                     break;
-                }else {
+                } else {
                     System.out.println("Wrong option value");
                 }
             }
