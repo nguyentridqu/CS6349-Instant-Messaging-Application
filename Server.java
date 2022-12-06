@@ -247,7 +247,9 @@ public class Server {
                             break;
                     }
 
-                } catch (Exception e) {
+                } catch (java.io.EOFException e) {
+					break;
+				} catch (Exception e) {
                     e.printStackTrace();
                     break;
                 }
