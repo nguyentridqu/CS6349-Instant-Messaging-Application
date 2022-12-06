@@ -119,6 +119,7 @@ public class Client {
                 // exchange messages
                 Scanner cin = new Scanner(System.in);
                 System.out.println("Connection established with other client, start chatting...");
+                int skip = 0;
                 while (true) {
                     seq_no++;
                     byte[] client_msgs = (byte[]) clientObjIn.readObject();
@@ -131,7 +132,11 @@ public class Client {
                         if (sq_no_came != seq_no) {
                             throw new Exception("Sequence number mismatch");
                         }
-                        System.out.println("Other Client:" + chunks[0]);
+                        if(skip == 0) {
+                            skip++;
+                        }else {
+                            System.out.println("Other Client:" + chunks[0]);
+                        }
                     }
 
                     System.out.print("You: ");
@@ -412,8 +417,13 @@ public class Client {
 
                     // sending messages
                     System.out.println("Connection established with other client, waiting for other client to start chatting...");
+                    int skip = 0;
                     while (true) {
-                        System.out.print("You: ");
+                        if(skip == 0) {
+                            skip++;
+                        }else {
+                            System.out.print("You: ");
+                        }
                         String str = cin.nextLine();
                         if (str.equals("!quit")) {
                             break;
