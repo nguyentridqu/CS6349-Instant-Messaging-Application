@@ -42,12 +42,21 @@ public class Server {
         public boolean validClient(int otherClientId) {
             boolean valid = false;
             for (ClientObj client : clientObjs) {
-                if (client.getId() == otherClientId) {
+                if (client.getId() == otherClientId && !client.isBusy()) {
                     valid = true;
                     break;
                 }
             }
             return valid && (otherClientId != thisClientId);
+        }
+
+        public ClientObj getClientById(int otherClientId) {
+            for (ClientObj client : clientObjs) {
+                if (client.getId() == otherClientId) {
+                    return client;
+                }
+            }
+            return null;
         }
 
         public String getClientIP(int otherClientId) {
@@ -59,7 +68,7 @@ public class Server {
             return "";
         }
 
-		public String getClientPort(int otherClientId) {
+        public String getClientPort(int otherClientId) {
             for (ClientObj client : clientObjs) {
                 if (client.getId() == otherClientId) {
                     return String.valueOf(client.getPort());
@@ -201,8 +210,8 @@ public class Server {
 
                                 // get other client's IP address
                                 String otherIP = getClientIP(otherClientID);
-								// get other client's port number
-								String otherPort = getClientPort(otherClientID);
+                                // get other client's port number
+                                String otherPort = getClientPort(otherClientID);
 
                                 // generate client-client session key
                                 SecureRandom random = new SecureRandom();
@@ -219,10 +228,14 @@ public class Server {
 
                                 // send key, ticket, and timestamp
                                 Helper.sendEncrypt(objOut, otherIP, sessionKey);
-								Helper.sendEncrypt(objOut, otherPort, sessionKey);
+                                Helper.sendEncrypt(objOut, otherPort, sessionKey);
                                 Helper.sendEncrypt(objOut, CCkey, sessionKey);
                                 Helper.sendEncrypt(objOut, ticket, sessionKey);
                                 Helper.sendEncrypt(objOut, ts, sessionKey);
+
+                                // mark both clients as busy
+                                getClientById(thisClientId).setIsBusy(true);
+                                getClientById(otherClientID).setIsBusy(true);
 
                             } else {
                                 Helper.sendEncrypt(objOut, "failure", sessionKey);
