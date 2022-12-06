@@ -332,7 +332,7 @@ public class Client {
 						
                         // System.out.println("Client list:\n" + clientList);
 						ArrayList<ClientObj> clients = Util.buildClientList(clientList);
-						Util.printClientList(clients);
+						Util.printClientList(clients, clientID);
 
                     } catch (Exception e) {
                         e.printStackTrace();

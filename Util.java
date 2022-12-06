@@ -297,15 +297,20 @@ public final class Util {
 		}
 	}
 
-	public static void printClientList(ArrayList<ClientObj> clientList) {
+	public static void printClientList(ArrayList<ClientObj> clientList, int clientID) {
 		String output = "";
 
 		for(int i = 0; i < clientList.size(); i++){
 			ClientObj curClient = clientList.get(i);
+			// see if client is busy
 			if(curClient.isBusy()) {
 				output += "Client ID: " + curClient.getId() + " | Status: busy | IP: " + curClient.getIp() + ":" + curClient.getPort();
 			} else {
 				output += "Client ID: " + curClient.getId() + " | Status: idle | IP: " + curClient.getIp() + ":" + curClient.getPort();
+			}
+			// see which client requested this so we can append self
+			if(curClient.getId() == clientID) {
+				output += " (self)";
 			}
 			output += "\n";
 		}
