@@ -118,8 +118,8 @@ public class Client {
 
                 // exchange messages
                 Scanner cin = new Scanner(System.in);
+                System.out.println("Connection established with other client, waiting for other client to start chatting...");
                 while (true) {
-                    System.out.println("Connection established with other client, waiting for other client to start chatting...");
                     seq_no++;
                     byte[] client_msgs = (byte[]) clientObjIn.readObject();
                     byte[] sha = (byte[]) clientObjIn.readObject();
@@ -260,13 +260,6 @@ public class Client {
     public static void main(String[] args) throws Exception {
         clientID = Integer.parseInt(args[0]);
 
-        // generate key pair and store it to file, only used once
-        // KeyPair pair = Util.generateRSAKeyPair(RSAkeyLen, clientID);
-        // RSAprivateKey = pair.getPrivate();
-        // RSApublicKey = pair.getPublic();
-        // Util.writePublicKey(clientID, RSApublicKey);
-        // Util.writePrivateKey(clientID, RSAprivateKey);
-
         // get client keys from file
         RSApublicKey = Util.getPublicKey(clientID);
         RSAprivateKey = Util.getPrivatKey(clientID);
@@ -319,7 +312,8 @@ public class Client {
                 System.out.println("Choose the option:\n" +
                         "1 - Get list of other clients\n" +
                         "2 - Connect to another client\n" +
-                        "3 - Disconnect\n");
+                        "3 - Disconnect\n" +
+                        "4 - Chll out");
                 Scanner cin = new Scanner(System.in);
                 int option = cin.nextInt();
 
@@ -416,8 +410,8 @@ public class Client {
                     clientObjOut.flush();
 
                     // sending messages
+                    System.out.println("Connection established with other client, start chatting...");
                     while (true) {
-                        System.out.println("Connection established with other client, start chatting...");
                         String str = cin.nextLine();
                         if (str.equals("!quit")) {
                             break;
@@ -443,10 +437,12 @@ public class Client {
                             System.out.println("Other Client:" + chunks[0]);
                         }
                     }
-
                 } else if (option == 3) {
                     break;
-                } else {
+                }
+                else if (option == 4){
+                    break;
+                }else {
                     System.out.println("Wrong option value");
                 }
             }
@@ -459,16 +455,5 @@ public class Client {
 
         // close the connection and streams
         closeOutputStreams();
-
-        // TODO: delete, temp testing for concurrent client connections to server
-        while (true) {
-            try {
-                Thread.sleep(4000);
-            } catch (Exception e) {
-                System.out.println(e);
-            }
-        }
-
     }
-
 }
